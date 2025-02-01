@@ -1,0 +1,43 @@
+<html>
+<head>
+  <title>Voice Recorder with Head Voice Simulation</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Voice Recorder with Head Voice Simulation</h1>
+    
+    <div class="controls">
+      <button id="recordBtn" class="btn">
+        <svg class="mic-icon" viewBox="0 0 24 24">
+          <path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z" />
+        </svg>
+        Start Recording
+      </button>
+      
+      <div class="visualization">
+        <canvas id="visualizer"></canvas>
+      </div>
+      
+      <div class="audio-player">
+        <audio id="audioPlayback" controls></audio>
+      </div>
+      
+      <div class="effects-panel">
+        <label>
+          Head Voice Intensity:
+          <input type="range" id="headVoiceLevel" min="0" max="100" value="50">
+        </label>
+      </div>
+    </div>
+    
+    <div class="info-box">
+      <p>This recorder simulates how your voice sounds in your head by applying audio processing to enhance lower frequencies and add resonance, similar to how bone conduction affects your perception of your own voice.</p>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="recorder.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
