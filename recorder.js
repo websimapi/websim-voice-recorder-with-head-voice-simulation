@@ -22,6 +22,7 @@ class VoiceRecorder {
   setupEventListeners() {
     this.recordBtn.addEventListener('click', () => this.toggleRecording());
     window.addEventListener('resize', () => this.setupCanvas());
+    this.headVoiceLevel.addEventListener('input', () => this.updateHeadVoiceProcessing());
   }
 
   async initializeAudio() {
@@ -38,31 +39,71 @@ class VoiceRecorder {
     }
   }
 
+  updateHeadVoiceProcessing() {
+    if (!this.filters) return;
+    
+    const intensity = this.headVoiceLevel.value / 100;
+    
+    // Update resonance peaks based on typical bone conduction frequencies
+    this.filters.lowResonance.frequency.value = 300 + (intensity * 200);  // 300-500 Hz
+    this.filters.lowResonance.Q.value = 2 + (intensity * 3);  // Sharper resonance with higher intensity
+    this.filters.lowResonance.gain.value = 10 * intensity;  // Boost low frequencies
+
+    this.filters.midResonance.frequency.value = 1000 + (intensity * 500);  // 1000-1500 Hz
+    this.filters.midResonance.Q.value = 1.5 + (intensity * 2);
+    this.filters.midResonance.gain.value = 5 * intensity;
+
+    // Bone conduction attenuates higher frequencies
+    this.filters.highShelf.frequency.value = 2000;
+    this.filters.highShelf.gain.value = -12 * intensity;
+
+    // Add subtle warmth in the low-mids
+    this.filters.lowMidBoost.frequency.value = 600;
+    this.filters.lowMidBoost.Q.value = 0.7;
+    this.filters.lowMidBoost.gain.value = 4 * intensity;
+  }
+
   setupAudioProcessing(stream) {
     const source = this.audioContext.createMediaStreamSource(stream);
     const analyzer = this.audioContext.createAnalyser();
     analyzer.fftSize = 2048;
     
-    source.connect(analyzer);
-    
-    // Create audio processing nodes
-    const lowShelf = this.audioContext.createBiquadFilter();
-    lowShelf.type = 'lowshelf';
-    lowShelf.frequency.value = 300;
-    lowShelf.gain.value = 10;
+    // Create multiple filters for more accurate head voice simulation
+    this.filters = {
+      lowResonance: this.audioContext.createBiquadFilter(),
+      midResonance: this.audioContext.createBiquadFilter(),
+      highShelf: this.audioContext.createBiquadFilter(),
+      lowMidBoost: this.audioContext.createBiquadFilter(),
+    };
 
-    const highShelf = this.audioContext.createBiquadFilter();
-    highShelf.type = 'highshelf';
-    highShelf.frequency.value = 2000;
-    highShelf.gain.value = -10;
+    // Configure filter types
+    this.filters.lowResonance.type = 'peaking';
+    this.filters.midResonance.type = 'peaking';
+    this.filters.highShelf.type = 'highshelf';
+    this.filters.lowMidBoost.type = 'peaking';
 
-    // Create a destination for the processed audio
+    // Create compressor for better dynamics control
+    const compressor = this.audioContext.createDynamicsCompressor();
+    compressor.threshold.value = -24;
+    compressor.knee.value = 12;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.005;
+    compressor.release.value = 0.1;
+
+    // Create destination for the processed audio
     const destination = this.audioContext.createMediaStreamDestination();
     
     // Connect the audio processing chain
-    source.connect(lowShelf);
-    lowShelf.connect(highShelf);
-    highShelf.connect(destination);
+    source.connect(analyzer);
+    source.connect(this.filters.lowResonance);
+    this.filters.lowResonance.connect(this.filters.midResonance);
+    this.filters.midResonance.connect(this.filters.highShelf);
+    this.filters.highShelf.connect(this.filters.lowMidBoost);
+    this.filters.lowMidBoost.connect(compressor);
+    compressor.connect(destination);
+
+    // Initialize filter values
+    this.updateHeadVoiceProcessing();
 
     // Setup recording with the processed stream
     this.mediaRecorder = new MediaRecorder(destination.stream);
@@ -78,7 +119,7 @@ class VoiceRecorder {
       this.chunks = [];
     };
 
-    // Visualizer
+    // Visualizer setup
     const drawVisualizer = () => {
       requestAnimationFrame(drawVisualizer);
       
