@@ -56,30 +56,16 @@ class VoiceRecorder {
     highShelf.frequency.value = 2000;
     highShelf.gain.value = -10;
 
-    // Create media recorder with processed audio
-    const processorNode = this.audioContext.createScriptProcessor(2048, 1, 1);
+    // Create a destination for the processed audio
+    const destination = this.audioContext.createMediaStreamDestination();
     
-    processorNode.onaudioprocess = (e) => {
-      if (this.isRecording) {
-        const intensity = this.headVoiceLevel.value / 100;
-        const inputBuffer = e.inputBuffer.getChannelData(0);
-        const outputBuffer = e.outputBuffer.getChannelData(0);
-        
-        // Apply head voice effect
-        for (let i = 0; i < inputBuffer.length; i++) {
-          outputBuffer[i] = this.processAudioSample(inputBuffer[i], intensity);
-        }
-      }
-    };
-
+    // Connect the audio processing chain
     source.connect(lowShelf);
     lowShelf.connect(highShelf);
-    highShelf.connect(processorNode);
-    processorNode.connect(this.audioContext.destination);
+    highShelf.connect(destination);
 
-    // Setup recording
-    const processedStream = processorNode.stream;
-    this.mediaRecorder = new MediaRecorder(processedStream);
+    // Setup recording with the processed stream
+    this.mediaRecorder = new MediaRecorder(destination.stream);
 
     this.mediaRecorder.ondataavailable = (e) => {
       this.chunks.push(e.data);
@@ -87,7 +73,8 @@ class VoiceRecorder {
 
     this.mediaRecorder.onstop = () => {
       const blob = new Blob(this.chunks, { type: 'audio/webm' });
-      this.audioPlayback.src = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      this.audioPlayback.src = url;
       this.chunks = [];
     };
 
@@ -128,32 +115,27 @@ class VoiceRecorder {
     drawVisualizer();
   }
 
-  processAudioSample(sample, intensity) {
-    // Simulate head voice by enhancing certain frequencies and adding resonance
-    const resonance = 0.3 * intensity;
-    const bassBoost = 0.4 * intensity;
-    
-    // Add subtle harmonic enhancement
-    const harmonic = Math.sin(sample * Math.PI * 2) * 0.2 * intensity;
-    
-    // Combine original signal with processed components
-    return sample * (1 - intensity) + 
-           (sample + harmonic) * resonance +
-           Math.tanh(sample * 3) * bassBoost;
-  }
-
   async toggleRecording() {
-    if (!this.isRecording) {
-      await this.initializeAudio();
-      this.mediaRecorder.start();
-      this.isRecording = true;
-      this.recordBtn.textContent = 'Stop Recording';
-      this.recordBtn.classList.add('recording');
-    } else {
-      this.mediaRecorder.stop();
-      this.isRecording = false;
-      this.recordBtn.textContent = 'Start Recording';
-      this.recordBtn.classList.remove('recording');
+    try {
+      if (!this.isRecording) {
+        await this.initializeAudio();
+        if (this.mediaRecorder) {
+          this.mediaRecorder.start();
+          this.isRecording = true;
+          this.recordBtn.textContent = 'Stop Recording';
+          this.recordBtn.classList.add('recording');
+        }
+      } else {
+        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+          this.mediaRecorder.stop();
+          this.isRecording = false;
+          this.recordBtn.textContent = 'Start Recording';
+          this.recordBtn.classList.remove('recording');
+        }
+      }
+    } catch (error) {
+      console.error('Error in toggleRecording:', error);
+      alert('An error occurred while trying to record. Please make sure you have given microphone permissions.');
     }
   }
 }
