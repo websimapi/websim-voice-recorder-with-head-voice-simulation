@@ -93,6 +93,33 @@ audio {
 
 input[type="range"] {
   width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  background: #dfe1e5;
+  border-radius: 4px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #1a73e8;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #1557b0;
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10px;
+  color: #5f6368;
+  font-size: 0.9rem;
 }
 
 .info-box {

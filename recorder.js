@@ -42,25 +42,26 @@ class VoiceRecorder {
   updateHeadVoiceProcessing() {
     if (!this.filters) return;
     
-    const intensity = this.headVoiceLevel.value / 100;
+    // Increased range and more dramatic effects
+    const intensity = (this.headVoiceLevel.value / 100) * 2; // Now goes up to 2x intensity
     
-    // Update resonance peaks based on typical bone conduction frequencies
-    this.filters.lowResonance.frequency.value = 300 + (intensity * 200);  // 300-500 Hz
-    this.filters.lowResonance.Q.value = 2 + (intensity * 3);  // Sharper resonance with higher intensity
-    this.filters.lowResonance.gain.value = 10 * intensity;  // Boost low frequencies
+    // Enhanced resonance peaks with wider ranges
+    this.filters.lowResonance.frequency.value = 250 + (intensity * 400);  // 250-650 Hz range
+    this.filters.lowResonance.Q.value = 2 + (intensity * 6);  // Much sharper resonance
+    this.filters.lowResonance.gain.value = 15 * intensity;  // Stronger low boost
 
-    this.filters.midResonance.frequency.value = 1000 + (intensity * 500);  // 1000-1500 Hz
-    this.filters.midResonance.Q.value = 1.5 + (intensity * 2);
-    this.filters.midResonance.gain.value = 5 * intensity;
+    this.filters.midResonance.frequency.value = 800 + (intensity * 1000);  // 800-1800 Hz
+    this.filters.midResonance.Q.value = 1.5 + (intensity * 4);
+    this.filters.midResonance.gain.value = 8 * intensity;
 
-    // Bone conduction attenuates higher frequencies
+    // More aggressive high frequency attenuation
     this.filters.highShelf.frequency.value = 2000;
-    this.filters.highShelf.gain.value = -12 * intensity;
+    this.filters.highShelf.gain.value = -18 * intensity;
 
-    // Add subtle warmth in the low-mids
-    this.filters.lowMidBoost.frequency.value = 600;
-    this.filters.lowMidBoost.Q.value = 0.7;
-    this.filters.lowMidBoost.gain.value = 4 * intensity;
+    // Enhanced warmth in the low-mids
+    this.filters.lowMidBoost.frequency.value = 500 + (intensity * 200);
+    this.filters.lowMidBoost.Q.value = 0.7 + (intensity * 0.6);
+    this.filters.lowMidBoost.gain.value = 6 * intensity;
   }
 
   setupAudioProcessing(stream) {
